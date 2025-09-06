@@ -37,6 +37,12 @@ export default function SigninWithPassword() {
       if (signInError) {
         setError(signInError.message);
       } else {
+        // fire and forget audit
+        fetch("/api/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "login", entity_type: "auth" }),
+        }).catch(() => {});
         router.replace("/");
       }
     } catch (err: any) {

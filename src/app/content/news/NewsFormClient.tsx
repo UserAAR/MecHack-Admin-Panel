@@ -120,6 +120,35 @@ export default function NewsFormClient({
     }
   }
 
+  async function audit(action: string, extra?: Record<string, any>) {
+    try {
+      const res = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          entity_type: "news",
+          entity_id: id || en.slug || az.slug || undefined,
+          metadata: {
+            mode,
+            published: !!(extra?.published ?? false),
+            slug: en.slug || az.slug || null,
+            title: en.title || az.title || null,
+            ...extra,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({} as any));
+        // eslint-disable-next-line no-console
+        console.error("Audit failed:", j?.error || res.status);
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("Audit error:", e);
+    }
+  }
+
   async function handleSave(publish: boolean) {
     setSaving(true);
     setError(null);
@@ -145,7 +174,10 @@ export default function NewsFormClient({
         if (e1) throw e1;
         const { error: e2 } = await upsertAzWithSlug(userId, published_at, created_at_iso);
         if (e2) throw e2;
+        await audit(publish ? "news_created_published" : "news_created_draft", { published: !!published_at });
       } else if (mode === "edit" && id) {
+        const wasPublished = !!initialEn?.published_at;
+        const willBePublished = !!published_at;
         const { error: e1 } = await supabase
           .from("news")
           .update({
@@ -163,6 +195,9 @@ export default function NewsFormClient({
         if (e1) throw e1;
         const { error: e2 } = await upsertAzWithSlug(userId, published_at, created_at_iso);
         if (e2) throw e2;
+        if (!wasPublished && willBePublished) await audit("news_published", { published: true });
+        else if (wasPublished && !willBePublished) await audit("news_unpublished", { published: false });
+        else await audit("news_updated", { published: willBePublished });
       }
       router.replace("/content/news");
     } catch (err: any) {
@@ -179,6 +214,7 @@ export default function NewsFormClient({
     try {
       await supabase.from("news").delete().eq("id", id);
       if (en.slug) await supabase.from("news_az").delete().eq("slug", en.slug);
+      await audit("news_deleted", { slug: en.slug || null });
       router.replace("/content/news");
     } finally {
       setSaving(false);

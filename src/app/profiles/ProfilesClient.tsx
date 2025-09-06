@@ -85,6 +85,21 @@ export default function ProfilesClient({ initial, currentRole }: { initial: Prof
     }
   };
 
+  async function resetPassword(userId: string) {
+    const newPassword = prompt("Enter a new password (min 6 chars)");
+    if (!newPassword) return;
+    const fd = new FormData();
+    fd.append("userId", userId);
+    fd.append("newPassword", newPassword);
+    const res = await fetch("/api/auth/admin-reset-password", { method: "POST", body: fd });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Failed to reset password (service key required)");
+    } else {
+      alert("Password reset successfully");
+    }
+  }
+
   const counts = useMemo(() => {
     const c: Record<"all" | ProfileRole, number> = { all: allRows.length, user: 0, admin: 0, superadmin: 0 } as any;
     for (const r of allRows) c[r.role]++;
@@ -160,9 +175,12 @@ export default function ProfilesClient({ initial, currentRole }: { initial: Prof
                   </td>
                   <td className="px-4 py-2 text-sm">{formatDate(p.created_at)}</td>
                   {isSuperadmin && (
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right space-x-2">
                       <button className={cn(buttonVariants({ variant: "outlineDanger", shape: "rounded", size: "small" }))} onClick={() => removeProfile(p.id)} disabled={loading}>
                         Delete
+                      </button>
+                      <button className={cn(buttonVariants({ variant: "outlineDark", shape: "rounded", size: "small" }))} onClick={() => resetPassword(p.id)} disabled={loading}>
+                        Reset Password
                       </button>
                     </td>
                   )}

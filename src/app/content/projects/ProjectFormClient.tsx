@@ -111,6 +111,27 @@ export default function ProjectFormClient({
     }
   }
 
+  async function audit(action: string, extra?: Record<string, any>) {
+    try {
+      await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          entity_type: "projects",
+          entity_id: id || en.slug || az.slug || undefined,
+          metadata: {
+            mode,
+            published: !!(extra?.published ?? false),
+            slug: en.slug || az.slug || null,
+            title: en.title || az.title || null,
+            ...extra,
+          },
+        }),
+      });
+    } catch {}
+  }
+
   async function handleSave(publish: boolean) {
     setSaving(true);
     setError(null);
@@ -135,7 +156,10 @@ export default function ProjectFormClient({
         if (e1) throw e1;
         const { error: e2 } = await upsertAzWithSlug(userId, published_at, created_at_iso);
         if (e2) throw e2;
+        await audit(publish ? "project_created_published" : "project_created_draft", { published: !!published_at });
       } else if (mode === "edit" && id) {
+        const wasPublished = !!initialEn?.published_at;
+        const willBePublished = !!published_at;
         const { error: e1 } = await supabase
           .from("projects")
           .update({
@@ -152,6 +176,9 @@ export default function ProjectFormClient({
         if (e1) throw e1;
         const { error: e2 } = await upsertAzWithSlug(userId, published_at, created_at_iso);
         if (e2) throw e2;
+        if (!wasPublished && willBePublished) await audit("project_published", { published: true });
+        else if (wasPublished && !willBePublished) await audit("project_unpublished", { published: false });
+        else await audit("project_updated", { published: willBePublished });
       }
       router.replace("/content/projects");
     } catch (err: any) {
@@ -168,6 +195,7 @@ export default function ProjectFormClient({
     try {
       await supabase.from("projects").delete().eq("id", id);
       if (en.slug) await supabase.from("projects_az").delete().eq("slug", en.slug);
+      await audit("project_deleted", { slug: en.slug || null });
       router.replace("/content/projects");
     } finally {
       setSaving(false);

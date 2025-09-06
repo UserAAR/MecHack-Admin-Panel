@@ -20,12 +20,6 @@ export const NAV_DATA = [
         ],
       },
       {
-        title: "Media Library",
-        url: "/media",
-        icon: Icons.FourCircle,
-        items: [],
-      },
-      {
         title: "Calendar",
         url: "/calendar",
         icon: Icons.Calendar,
@@ -42,6 +36,13 @@ export const NAV_DATA = [
         url: "/settings",
         icon: Icons.Alphabet,
         items: [],
+      },
+      {
+        title: "Activity Logs",
+        url: "/logs",
+        icon: Icons.PieChart,
+        items: [],
+        requiredRole: "superadmin",
       },
     ],
   },

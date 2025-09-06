@@ -42,7 +42,7 @@ export function Sidebar() {
         });
       });
     });
-  }, [pathname]);
+  }, [pathname, expandedItems]);
 
   const allow = (requiredRole?: string) => {
     if (!requiredRole) return true;
@@ -105,72 +105,17 @@ export function Sidebar() {
 
                 <nav role="navigation" aria-label={section.label}>
                   <ul className="space-y-2">
-                    {section.items.map((item) => (
-                      <li key={item.title}>
-                        {item.items.length ? (
-                          <div>
-                            <MenuItem
-                              isActive={item.items.some(
-                                ({ url }) => url === pathname,
-                              )}
-                              onClick={() => toggleExpanded(item.title)}
-                            >
-                              <item.icon
-                                className="size-6 shrink-0"
-                                aria-hidden="true"
-                              />
-
-                              <span>{item.title}</span>
-
-                              <ChevronUp
-                                className={cn(
-                                  "ml-auto rotate-180 transition-transform duration-200",
-                                  expandedItems.includes(item.title) &&
-                                    "rotate-0",
-                                )}
-                                aria-hidden="true"
-                              />
-                            </MenuItem>
-
-                            {expandedItems.includes(item.title) && (
-                              <ul
-                                className="ml-9 mr-0 space-y-1.5 pb-[15px] pr-0 pt-2"
-                                role="menu"
-                              >
-                                {item.items
-                                  .filter((subItem) => allow((subItem as any).requiredRole))
-                                  .map((subItem) => (
-                                    <li key={subItem.title} role="none">
-                                      <MenuItem
-                                        as="link"
-                                        href={subItem.url}
-                                        isActive={pathname === subItem.url}
-                                        className="flex items-center gap-2 py-2"
-                                      >
-                                        {"icon" in subItem && subItem.icon ? (
-                                          <subItem.icon className="size-4 opacity-70" aria-hidden="true" />
-                                        ) : null}
-                                        <span>{subItem.title}</span>
-                                      </MenuItem>
-                                    </li>
-                                  ))}
-                              </ul>
-                            )}
-                          </div>
-                        ) : (
-                          (() => {
-                            const href =
-                              "url" in item
-                                ? item.url + ""
-                                : "/" +
-                                  item.title.toLowerCase().split(" ").join("-");
-
-                            return (
+                    {section.items
+                      .filter((item) => allow((item as any).requiredRole))
+                      .map((item) => (
+                        <li key={item.title}>
+                          {item.items.length ? (
+                            <div>
                               <MenuItem
-                                className="flex items-center gap-3 py-3"
-                                as="link"
-                                href={href}
-                                isActive={pathname === href}
+                                isActive={item.items.some(
+                                  ({ url }) => url === pathname,
+                                )}
+                                onClick={() => toggleExpanded(item.title)}
                               >
                                 <item.icon
                                   className="size-6 shrink-0"
@@ -178,12 +123,69 @@ export function Sidebar() {
                                 />
 
                                 <span>{item.title}</span>
+
+                                <ChevronUp
+                                  className={cn(
+                                    "ml-auto rotate-180 transition-transform duration-200",
+                                    expandedItems.includes(item.title) &&
+                                      "rotate-0",
+                                  )}
+                                  aria-hidden="true"
+                                />
                               </MenuItem>
-                            );
-                          })()
-                        )}
-                      </li>
-                    ))}
+
+                              {expandedItems.includes(item.title) && (
+                                <ul
+                                  className="ml-9 mr-0 space-y-1.5 pb-[15px] pr-0 pt-2"
+                                  role="menu"
+                                >
+                                  {item.items
+                                    .filter((subItem) => allow((subItem as any).requiredRole))
+                                    .map((subItem) => (
+                                      <li key={subItem.title} role="none">
+                                        <MenuItem
+                                          as="link"
+                                          href={subItem.url}
+                                          isActive={pathname === subItem.url}
+                                          className="flex items-center gap-2 py-2"
+                                        >
+                                          {"icon" in subItem && subItem.icon ? (
+                                            <subItem.icon className="size-4 opacity-70" aria-hidden="true" />
+                                          ) : null}
+                                          <span>{subItem.title}</span>
+                                        </MenuItem>
+                                      </li>
+                                    ))}
+                                </ul>
+                              )}
+                            </div>
+                          ) : (
+                            (() => {
+                              const href =
+                                "url" in item
+                                  ? item.url + ""
+                                  : "/" +
+                                    item.title.toLowerCase().split(" ").join("-");
+
+                              return (
+                                <MenuItem
+                                  className="flex items-center gap-3 py-3"
+                                  as="link"
+                                  href={href}
+                                  isActive={pathname === href}
+                                >
+                                  <item.icon
+                                    className="size-6 shrink-0"
+                                    aria-hidden="true"
+                                  />
+
+                                  <span>{item.title}</span>
+                                </MenuItem>
+                              );
+                            })()
+                          )}
+                        </li>
+                      ))}
                   </ul>
                 </nav>
               </div>

@@ -41,6 +41,12 @@ export function UserInfo() {
   const handleSignOut = async () => {
     const supabase = getSupabaseBrowserClient();
     await supabase.auth.signOut();
+    // fire and forget audit
+    fetch("/api/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "logout", entity_type: "auth" }),
+    }).catch(() => {});
     window.location.href = "/auth/sign-in";
   };
 

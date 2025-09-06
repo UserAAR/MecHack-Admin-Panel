@@ -105,6 +105,27 @@ export default function EventFormClient({
     }
   }
 
+  async function audit(action: string, extra?: Record<string, any>) {
+    try {
+      await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          entity_type: "events",
+          entity_id: id || en.title || undefined,
+          metadata: {
+            mode,
+            published: !!(extra?.published ?? false),
+            title: en.title || az.title || null,
+            event_date: eventDate || null,
+            ...extra,
+          },
+        }),
+      });
+    } catch {}
+  }
+
   async function handleSave(publish: boolean) {
     setSaving(true);
     setError(null);
@@ -130,7 +151,10 @@ export default function EventFormClient({
         if (e1) throw e1;
         const { error: e2 } = await upsertAz(userId, published_at, created_at_iso, event_date_iso);
         if (e2) throw e2;
+        await audit(publish ? "event_created_published" : "event_created_draft", { published: !!published_at });
       } else if (mode === "edit" && id) {
+        const wasPublished = !!initialEn?.published_at;
+        const willBePublished = !!published_at;
         const { error: e1 } = await supabase
           .from("events")
           .update({
@@ -147,6 +171,9 @@ export default function EventFormClient({
         if (e1) throw e1;
         const { error: e2 } = await upsertAz(userId, published_at, created_at_iso, event_date_iso);
         if (e2) throw e2;
+        if (!wasPublished && willBePublished) await audit("event_published", { published: true });
+        else if (wasPublished && !willBePublished) await audit("event_unpublished", { published: false });
+        else await audit("event_updated", { published: willBePublished });
       }
       router.replace("/content/events");
     } catch (err: any) {
@@ -164,6 +191,7 @@ export default function EventFormClient({
       await supabase.from("events").delete().eq("id", id);
       // try delete az by matching title and date
       if (en.title && eventDate) await supabase.from("events_az").delete().eq("title", en.title).eq("event_date", new Date(eventDate).toISOString());
+      await audit("event_deleted", { title: en.title || null });
       router.replace("/content/events");
     } finally {
       setSaving(false);
