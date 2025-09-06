@@ -12,11 +12,15 @@ import AppFrame from "./AppFrame";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | NextAdmin - Next.js Dashboard Kit",
-    default: "NextAdmin - Next.js Dashboard Kit",
+    template: "%s | Mechack Admin Panel",
+    default: "Mechack Admin Panel",
   },
-  description:
-    "Next.js admin dashboard toolkit with 200+ templates, UI components, and integrations for fast dashboard development.",
+  description: "Mechack Admin Panel for managing content, media, users and system settings.",
+  icons: {
+    icon: "/logo/logo.jpg",
+    shortcut: "/logo/logo.jpg",
+    apple: "/logo/logo.jpg",
+  },
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {
