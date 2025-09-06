@@ -14,6 +14,9 @@ export const buttonVariants = cva(
         outlineGreen: "border border-green hover:bg-green/10 text-green",
         outlineDark:
           "border border-dark hover:bg-dark/10 text-dark dark:hover:bg-white/10 dark:border-white/25 dark:text-white",
+        danger: "bg-red-600 text-white hover:bg-red-700",
+        outlineDanger: "border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10",
+        ghost: "text-dark hover:bg-dark/5 dark:text-white dark:hover:bg-white/10",
       },
       shape: {
         default: "",
@@ -23,6 +26,7 @@ export const buttonVariants = cva(
       size: {
         default: "py-3.5 px-10 py-3.5 lg:px-8 xl:px-10",
         small: "py-[11px] px-6",
+        tiny: "py-1.5 px-3 text-xs",
       },
     },
     defaultVariants: {
